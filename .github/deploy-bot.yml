@@ -1,0 +1,44 @@
+name: Deploy Bot
+
+on:
+  push:
+    branches:
+      - main  # Trigger when there's a push to the main branch
+  schedule:
+    - cron: '0 */3 * * *'  # Run every 3 hours
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Use the latest version of Ubuntu for the runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Use Python 3.9
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install telebot flask pymongo aiohttp python-telegram-bot
+
+      - name: Make scripts executable
+        run: |
+          chmod +x *
+        
+      - name: Start the bot
+        run: |
+          echo "Starting the bot..."
+          nohup python3 nand.py &  # Run in background
+          tail -f nohup.out  # Check if bot is running, or print the logs
+
+      - name: Keep bot running and restart if it crashes
+        run: |
+          echo "Running bot in a loop..."
+          while true; do
+            python3 nand.py || echo "Bot crashed. Restarting in 5 seconds...";
+            sleep 5;
+          done
